@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>나만의 용돈 및 지출 관리 프로그램</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #f4f6f9;
+      color: #222;
+      display: flex;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      padding: 28px 24px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 6px;
+      color: #1a1f27;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      text-align: center;
+      color: #6c757d;
+      margin-bottom: 20px;
+    }
+
+    /* 실시간 10만 원 경고 배너 */
+    .alert-banner {
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s ease;
+    }
+
+    .alert-safe {
+      background-color: #e8f7ee;
+      color: #198754;
+      border: 1px solid #bce3cb;
+    }
+
+    .alert-danger {
+      background-color: #fde8e8;
+      color: #dc3545;
+      border: 1px solid #f5b7b1;
+      animation: shake 0.35s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    /* 자산 요약 카드 */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: #f8f9fa;
+      border-radius: 14px;
+      padding: 14px 10px;
+      text-align: center;
+      border: 1px solid #e9ecef;
+    }
+
+    .card.balance-card {
+      background: #eef4ff;
+      border-color: #cfe0ff;
+    }
+
+    .card-label {
+      font-size: 12px;
+      color: #6c757d;
+      margin-bottom: 6px;
+    }
+
+    .card-value {
+      font-size: 15px;
+      font-weight: 700;
+      word-break: break-all;
+    }
+
+    .income-text { color: #2b6cb0; }
+    .expense-text { color: #e53e3e; }
+    .balance-text { color: #1a202c; }
+
+    /* 입력 구역 */
+    .input-section {
+      margin-bottom: 24px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    /* 날짜 선택 입력창 스타일 */
+    .date-input-group {
+      flex: 0 0 140px;
+      background: #f8f9fa;
+      border: 2px solid #dee2e6;
+      border-radius: 12px;
+      padding: 4px 10px;
+      display: flex;
+      align-items: center;
+    }
+
+    .date-input-group input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 600;
+      color: #495057;
+      outline: none;
+      text-align: center;
+    }
+
+    .input-group {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: #f8f9fa;
+      border: 2px solid #dee2e6;
+      border-radius: 12px;
+      padding: 4px 14px;
+      transition: border-color 0.2s;
+    }
+
+    .input-group:focus-within, .date-input-group:focus-within {
+      border-color: #3b82f6;
+      background: #fff;
+    }
+
+    .input-group input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      font-size: 18px;
+      font-weight: 600;
+      padding: 10px 0;
+      outline: none;
+      text-align: right;
+    }
+
+    .input-group span {
+      margin-left: 6px;
+      font-weight: 600;
+      color: #495057;
+    }
+
+    /* 빠른 금액 버튼 */
+    .quick-btns {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .quick-btn {
+      flex: 1;
+      padding: 7px 0;
+      font-size: 12px;
+      font-weight: 600;
+      background: #edf2f7;
+      color: #4a5568;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .quick-btn:hover {
+      background: #e2e8f0;
+    }
+
+    /* 수입 / 지출 메인 버튼 */
+    .action-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #fff;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-expense {
+      background-color: #ef4444;
+    }
+
+    .btn-expense:hover {
+      background-color: #dc2626;
+    }
+
+    .btn-income {
+      background-color: #3b82f6;
+    }
+
+    .btn-income:hover {
+      background-color: #2563eb;
+    }
+
+    /* 에러 토스트 메시지 */
+    .error-msg {
+      color: #dc3545;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      margin-top: 10px;
+      min-height: 18px;
+    }
+
+    /* 입출금 내역 리스트 */
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .history-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #343a40;
+    }
+
+    .reset-btn {
+      background: none;
+      border: none;
+      font-size: 12px;
+      color: #868e96;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .history-list {
+      list-style: none;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #f8f9fa;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .item-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .badge-income {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .badge-expense {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .item-date {
+      font-size: 12px;
+      color: #6c757d;
+      font-weight: 500;
+    }
+
+    .item-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #adb5bd;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .delete-btn:hover {
+      color: #e53e3e;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #adb5bd;
+      font-size: 13px;
+      padding: 24px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>💰 나만의 용돈 관리장</h1>
+    <p class="subtitle">0원에서 시작해 날짜별로 수입과 지출을 기록하세요</p>
+
+    <!-- 10만 원 이상 지출 경고 배너 -->
+    <div id="alertBanner" class="alert-banner alert-safe">
+      <span>✅</span>
+      <span id="alertText">일주일 누적 지출 0원 — 예산 안에서 잘 관리하고 계십니다!</span>
+    </div>
+
+    <!-- 자산 현황 카드 -->
+    <div class="summary-grid">
+      <div class="card">
+        <div class="card-label">총 수입</div>
+        <div class="card-value income-text" id="totalIncome">0원</div>
+      </div>
+      <div class="card">
+        <div class="card-label">일주일 총 지출</div>
+        <div class="card-value expense-text" id="totalExpense">0원</div>
+      </div>
+      <div class="card balance-card">
+        <div class="card-label">현재 남은 잔액</div>
+        <div class="card-value balance-text" id="currentBalance">0원</div>
+      </div>
+    </div>
+
+    <!-- 금액 및 날짜 입력 구역 -->
+    <div class="input-section">
+      <div class="input-row">
+        <div class="date-input-group">
+          <input type="date" id="dateInput" />
+        </div>
+        <div class="input-group">
+          <input type="number" id="amountInput" placeholder="금액 입력" min="1" />
+          <span>원</span>
+        </div>
+      </div>
+
+      <div class="quick-btns">
+        <button class="quick-btn" onclick="addQuickAmount(1000)">+1천원</button>
+        <button class="quick-btn" onclick="addQuickAmount(5000)">+5천원</button>
+        <button class="quick-btn" onclick="addQuickAmount(10000)">+1만원</button>
+        <button class="quick-btn" onclick="addQuickAmount(50000)">+5만원</button>
+      </div>
+
+      <div class="action-btns">
+        <button class="btn btn-income" onclick="handleTransaction('수입')">➕ 용돈(수입) 추가</button>
+        <button class="btn btn-expense" onclick="handleTransaction('지출')">➖ 지출 금액 추가</button>
+      </div>
+
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+
+    <!-- 입출금 내역 리스트 -->
+    <div class="history-header">
+      <span class="history-title">📋 날짜별 입출금 내역</span>
+      <button class="reset-btn" onclick="resetAll()">전체 초기화</button>
+    </div>
+
+    <ul class="history-list" id="historyList">
+      <li class="empty-state">아직 기록된 내역이 없습니다. 용돈을 먼저 추가해 보세요!</li>
+    </ul>
+  </div>
+
+  <script>
+    // 페이지가 열릴 때 날짜 입력칸을 오늘 날짜로 기본 세팅
+    window.onload = function() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('dateInput').value = today;
+    };
+
+    let transactionList = [];
+
+    function addQuickAmount(value) {
+      const input = document.getElementById('amountInput');
+      const currentVal = parseInt(input.value) || 0;
+      input.value = currentVal + value;
+      clearError();
+    }
+
+    function showError(msg) {
+      document.getElementById('errorMsg').textContent = msg;
+    }
+
+    function clearError() {
+      document.getElementById('errorMsg').textContent = '';
+    }
+
+    function handleTransaction(type) {
+      const amountInput = document.getElementById('amountInput');
+      const dateInput = document.getElementById('dateInput');
+      
+      const amount = parseInt(amountInput.value);
+      const selectedDate = dateInput.value;
+
+      if (!selectedDate) {
+        showError('❌ 날짜를 선택해 주세요.');
+        return;
+      }
+
+      if (!amount || amount <= 0) {
+        showError('❌ 0원보다 큰 금액을 정확히 입력해 주세요.');
+        return;
+      }
+
+      const { currentBalance } = calculateTotals();
+
+      if (type === '지출' && amount > currentBalance) {
+        showError(`❌ 현재 남은 잔액(${currentBalance.toLocaleString()}원)보다 많은 금액은 지출할 수 없습니다!`);
+        return;
+      }
+
+      clearError();
+
+      // 시간(HH:MM) 대신 날짜(YYYY-MM-DD) 저장
+      transactionList.unshift({
+        id: Date.now(),
+        type: type,
+        amount: amount,
+        date: selectedDate
+      });
+
+      amountInput.value = '';
+      updateUI();
+    }
+
+    function calculateTotals() {
+      let totalIncome = 0;
+      let totalExpense = 0;
+
+      for (const item of transactionList) {
+        if (item.type === '수입') {
+          totalIncome += item.amount;
+        } else if (item.type === '지출') {
+          totalExpense += item.amount;
+        }
+      }
+
+      return {
+        totalIncome,
+        totalExpense,
+        currentBalance: totalIncome - totalExpense
+      };
+    }
+
+    function deleteItem(id) {
+      transactionList = transactionList.filter(item => item.id !== id);
+      clearError();
+      updateUI();
+    }
+
+    function resetAll() {
+      transactionList = [];
+      clearError();
+      updateUI();
+    }
+
+    function updateUI() {
+      const { totalIncome, totalExpense, currentBalance } = calculateTotals();
+
+      document.getElementById('totalIncome').textContent = `${totalIncome.toLocaleString()}원`;
+      document.getElementById('totalExpense').textContent = `${totalExpense.toLocaleString()}원`;
+      document.getElementById('currentBalance').textContent = `${currentBalance.toLocaleString()}원`;
+
+      const banner = document.getElementById('alertBanner');
+      const alertText = document.getElementById('alertText');
+
+      if (totalExpense >= 100000) {
+        banner.className = 'alert-banner alert-danger';
+        banner.querySelector('span').textContent = '🚨';
+        alertText.textContent = `경고: 일주일 총 지출액이 ${totalExpense.toLocaleString()}원으로 10만 원을 초과했습니다!`;
+      } else {
+        banner.className = 'alert-banner alert-safe';
+        banner.querySelector('span').textContent = '✅';
+        alertText.textContent = `일주일 누적 지출 ${totalExpense.toLocaleString()}원 — 예산 안에서 잘 관리하고 계십니다!`;
+      }
+
+      const listEl = document.getElementById('historyList');
+      if (transactionList.length === 0) {
+        listEl.innerHTML = '<li class="empty-state">아직 기록된 내역이 없습니다. 용돈을 먼저 추가해 보세요!</li>';
+        return;
+      }
+
+      listEl.innerHTML = transactionList.map(item => {
+        const isIncome = item.type === '수입';
+        return `
+          <li class="history-item">
+            <div class="item-left">
+              <span class="badge ${isIncome ? 'badge-income' : 'badge-expense'}">${item.type}</span>
+              <span class="item-date">${item.date}</span>
+            </div>
+            <div class="item-right">
+              <strong class="${isIncome ? 'income-text' : 'expense-text'}">
+                ${isIncome ? '+' : '-'}${item.amount.toLocaleString()}원
+              </strong>
+              <button class="delete-btn" onclick="deleteItem(${item.id})" title="삭제">✕</button>
+            </div>
+          </li>
+        `;
+      }).join('');
+    }
+  </script>
+</body>
+</html>
